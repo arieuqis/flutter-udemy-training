@@ -47,6 +47,8 @@ _handleSubmitted(String texto) async{
   _sendMessage(texto: texto);
 }
 
+
+
 void _sendMessage({String texto, String imgUrl}){
   Firestore.instance.collection("messages").add(
   {
@@ -124,6 +126,13 @@ class _TextComposerState extends State<TextComposer> {
   final _textController = TextEditingController();
   bool _isComposing = false;
 
+  void _reset(){
+    _textController.clear();
+    setState(() {
+     _isComposing = false; 
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     return IconTheme(
@@ -154,6 +163,7 @@ class _TextComposerState extends State<TextComposer> {
                 },
                 onSubmitted: (text){
                   _handleSubmitted(text);
+                  _reset();
                 },
               ),
             ),
@@ -174,6 +184,7 @@ class _TextComposerState extends State<TextComposer> {
                           onPressed: _isComposing 
                             ? (){
                               _handleSubmitted(_textController.text);
+                              _reset();
                             }
                             : null,
                       )
@@ -182,6 +193,7 @@ class _TextComposerState extends State<TextComposer> {
                           onPressed: _isComposing 
                             ? (){
                               _handleSubmitted(_textController.text);
+                              _reset();
                             }
                             : null,
                       );
