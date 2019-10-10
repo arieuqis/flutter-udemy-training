@@ -1,8 +1,12 @@
+import 'dart:io';
+
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:google_sign_in/google_sign_in.dart';
+import 'package:image_picker/image_picker.dart';
 
 void main(){
   runApp(MyApp());
@@ -93,13 +97,27 @@ class _ChatScreenState extends State<ChatScreen> {
         body: Column(
           children: <Widget>[
             Expanded(
-              child: ListView(
-                children: <Widget>[
-                  ChatMessage(),
-                  ChatMessage(),
-                  ChatMessage()
-                ],
-              ),
+              child: StreamBuilder(
+                stream: Firestore.instance.collection("messages").snapshots(),
+                builder: (context, snapshot){
+                  switch (snapshot.connectionState){
+                    case ConnectionState.none:
+                    case ConnectionState.waiting:
+                      return Center (
+                        child: CircularProgressIndicator(),
+                      );
+                    default:
+                      return ListView.builder(
+                        reverse: true,
+                        itemCount: snapshot.data.documents.length,
+                        itemBuilder: (context, index){
+                          List listaInvertida = snapshot.data.documents.reversed.toList();
+                          return ChatMessage(listaInvertida[index].data);
+                        },
+                      );
+                  }
+                },
+              )
             ),
             Divider(
               height: 1.0,
@@ -149,7 +167,21 @@ class _TextComposerState extends State<TextComposer> {
             Container(
               child: IconButton(
                 icon: Icon(Icons.photo_camera),
-                onPressed: (){},
+                onPressed: () async{
+                  await _ensureLoggedIn();
+                  File arquivo = await ImagePicker.pickImage(source: ImageSource.camera);
+                  if(arquivo == null){
+                    return;
+                  }
+                  StorageUploadTask task = FirebaseStorage.instance.ref()
+                      .child(googleSignIn.currentUser.id.toString() +
+                             DateTime.now().millisecondsSinceEpoch.toString())
+                      .putFile(arquivo);
+
+                  StorageTaskSnapshot taskSnapshot = await task.onComplete;
+                  String url = await taskSnapshot.ref.getDownloadURL();
+                  _sendMessage(imgUrl: url);
+                },
               ),
             ),
             Expanded(
@@ -201,6 +233,11 @@ class _TextComposerState extends State<TextComposer> {
 }
 
 class ChatMessage extends StatelessWidget {
+
+  final Map<String, dynamic> data;
+
+  ChatMessage(this.data);
+
   @override
   Widget build(BuildContext context) {
     return Container(
@@ -211,7 +248,7 @@ class ChatMessage extends StatelessWidget {
           Container(
             margin: const EdgeInsets.only(right: 16.0),
             child: CircleAvatar(
-              backgroundImage: NetworkImage("https://image.freepik.com/free-icon/important-person_318-10744.jpg"),
+              backgroundImage: NetworkImage(data["senderPhotoUrl"]),
             ),
           ),
           Expanded(
@@ -219,12 +256,12 @@ class ChatMessage extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: <Widget>[
                 Text(
-                  "Bruno",
+                  data["senderName"],
                   style: Theme.of(context).textTheme.subhead,
                 ),
                 Container(
                   margin: const EdgeInsets.only(top: 5.0),
-                  child: Text("Teste"),
+                  child: _getMessageContext(data),
                 )
               ],
             ),
@@ -232,5 +269,15 @@ class ChatMessage extends StatelessWidget {
         ],
       ),
     );
+  }
+
+  Widget _getMessageContext(data){
+    bool messageHasImage = data["imgUrl"] != null;
+
+    if(messageHasImage){
+      return Image.network(data["imgUrl"], width: 250.0);
+    }else{
+      return Text(data["text"]);
+    }
   }
 }
