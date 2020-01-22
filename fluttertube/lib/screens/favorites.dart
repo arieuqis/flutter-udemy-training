@@ -4,6 +4,7 @@ import 'package:flutter_youtube/flutter_youtube.dart';
 import 'package:fluttertube/api.dart';
 import 'package:fluttertube/models/video.dart';
 import 'package:fluttertube/blocs/favorite_bloc.dart';
+import 'package:fluttertube/modules/favorite_module.dart';
 
 class Favorites extends StatelessWidget {
   @override
@@ -16,7 +17,7 @@ class Favorites extends StatelessWidget {
       ),
       backgroundColor: Colors.black87,
       body: StreamBuilder<Map<String, Video>>(
-        stream: BlocProvider.getBloc<FavoriteBloc>().outFav,
+        stream: FavoriteModule.to.bloc<FavoriteBloc>().outFav,
         initialData: {},
         builder: (context, snapshot) {
           return ListView(
@@ -29,7 +30,7 @@ class Favorites extends StatelessWidget {
                   );
                 },
                 onLongPress: (){
-                  BlocProvider.getBloc<FavoriteBloc>().toggleFavorite(video);
+                  FavoriteModule.to.bloc<FavoriteBloc>().toggleFavorite(video);
                 },
                 child: Row(
                   children: <Widget>[

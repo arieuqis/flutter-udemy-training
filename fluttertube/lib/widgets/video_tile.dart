@@ -1,9 +1,9 @@
-import 'package:bloc_pattern/bloc_pattern.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_youtube/flutter_youtube.dart';
 import 'package:fluttertube/api.dart';
 import 'package:fluttertube/models/video.dart';
 import 'package:fluttertube/blocs/favorite_bloc.dart';
+import 'package:fluttertube/modules/home_module.dart';
 
 class VideoTile extends StatelessWidget {
   final Video video;
@@ -53,7 +53,7 @@ class VideoTile extends StatelessWidget {
                   ),
                 ),
                 StreamBuilder<Map<String, Video>>(
-                  stream: BlocProvider.getBloc<FavoriteBloc>().outFav,
+                  stream: HomeModule.to.bloc<FavoriteBloc>().outFav,
                   builder: (context, snapshot) {
                     if (snapshot.hasData) {
                       return IconButton(
@@ -63,7 +63,7 @@ class VideoTile extends StatelessWidget {
                         color: Colors.white,
                         iconSize: 30,
                         onPressed: () {
-                          BlocProvider.getBloc<FavoriteBloc>()
+                          HomeModule.to.bloc<FavoriteBloc>()
                               .toggleFavorite(video);
                         },
                       );
