@@ -32,11 +32,11 @@ class _LogoAppState extends State<LogoApp> with SingleTickerProviderStateMixin {
       duration: Duration(seconds: 2),
     );
 
-    animation = Tween<double>(begin: 0, end: 300).animate(controller);
+    animation = CurvedAnimation(parent: controller, curve: Curves.elasticOut);
     animation.addStatusListener((status) async {
-      if(status == AnimationStatus.completed){
+      if (status == AnimationStatus.completed) {
         controller.reverse();
-      } else if(status == AnimationStatus.dismissed){
+      } else if (status == AnimationStatus.dismissed) {
         controller.forward();
       }
     });
@@ -52,14 +52,18 @@ class _LogoAppState extends State<LogoApp> with SingleTickerProviderStateMixin {
 
   @override
   Widget build(BuildContext context) {
-    return AnimatedLogo(animation);
+    return Center(
+      child: BrunoTransition(
+        child: LogoWidget(),
+        animation: animation,
+      ),
+    );
   }
 }
 
-class AnimatedLogo extends AnimatedWidget{
-
+class AnimatedLogo extends AnimatedWidget {
   AnimatedLogo(Animation<double> animation) : super(listenable: animation);
-  
+
   @override
   Widget build(BuildContext context) {
     final Animation<double> animation = listenable;
@@ -72,5 +76,43 @@ class AnimatedLogo extends AnimatedWidget{
       ),
     );
   }
+}
 
+class LogoWidget extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      child: FlutterLogo(),
+    );
+  }
+}
+
+class BrunoTransition extends StatelessWidget {
+  final Widget child;
+  final Animation<double> animation;
+
+  final sizeTween = Tween<double>(begin: 0, end: 300);
+  final opacityTween = Tween<double>(begin: 0.1, end: 1);
+
+  BrunoTransition({this.child, this.animation});
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: AnimatedBuilder(
+        animation: animation,
+        builder: (_, child) {
+          return Opacity(
+            opacity: opacityTween.evaluate(animation).clamp(0.0, 1.0),
+            child: Container(
+              height: sizeTween.evaluate(animation),
+              width: sizeTween.evaluate(animation),
+              child: child,
+            ),
+          );
+        },
+        child: child,
+      ),
+    );
+  }
 }
